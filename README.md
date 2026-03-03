@@ -155,6 +155,37 @@ See [demo video on Devpost](https://geminiliveagentchallenge.devpost.com/) showi
 4. **User Dashboard** – User views results and screenshots
 5. **Live Run** – Agent navigates PC Caddy booking page in real-time
 
+## 👨‍💻 About the Developer
+
+Built by **Wolfgang Tober** – a 70-year-old developer with over **50 years of hands-on coding and architecture experience**.
+
+From **IBM mainframes** to **personal computers** to **mobile apps** – Wolfgang has seen and built it all:
+- 🖥️ Mainframe systems (COBOL, assembler)
+- 🗄️ Databases across generations (DB2, Oracle, MySQL, PostgreSQL, Firestore, and more)
+- 💻 Languages from Fortran to Go, Dart, Python, and Swift
+- 📱 Modern mobile development with Flutter (Android + iOS)
+- ☁️ Cloud-native architectures on Google Cloud
+
+> *"Age is just a number. The passion for building things never gets old."*
+
+## 📱 The Full GolfStatus App
+
+This Browser Agent is part of **GolfStatus** – a comprehensive AI-powered golf companion app available on **Android** and **iOS**. The full app includes much more:
+
+- 🦔 **Rules Hedgehog (Vision)** – Snap a photo of your ball position, get instant rule guidance
+- 📅 **Weekly Briefing** – AI-generated course analysis with weather, tournaments, and availability
+- 🦊 **Deal Finder** – Discovers hidden green fee deals and discounts
+- ✈️ **Travel Planner** – Complete golf trip planning with hotels and route optimization
+- 📰 **News Briefing** – Personalized golf news tailored to your interests
+- 💬 **Club Chat** – Community with AI moderation, replies, and photo sharing
+- 📊 **Agent Dashboard** – Full dashboard with live step logs and screenshots
+- 🎨 **Gamma Presentations** – Agent results as professional in-app presentations
+
+> **Want to try it?** The app is currently in testing. Access can be granted on request.
+>
+> - 🤖 [Android – Google Play](https://play.google.com/store/apps/details?id=de.wolfgangtober.golfstatus)
+> - 🍎 [iOS – TestFlight](https://testflight.apple.com/join/SKzQgswR)
+
 ## 🏆 Built for the Gemini Live Agent Challenge
 
 Created for the [Gemini Live Agent Challenge](https://geminiliveagentchallenge.devpost.com/) – `#GeminiLiveAgentChallenge`

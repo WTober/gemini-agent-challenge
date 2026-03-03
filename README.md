@@ -21,6 +21,12 @@ Golf clubs use booking systems like **PC Caddy** where reservations open exactly
 
 ![Architecture Diagram](architecture.png)
 
+### Screenshots
+
+| Skill Editor | Agent Running | Booking Confirmed |
+|---|---|---|
+| ![Skill Editor](screenshots/skill_editor.jpg) | ![Agent Running](screenshots/agent_running.jpg) | ![PC Caddy Confirmed](screenshots/pccaddy_booking_confirmed.jpg) |
+
 ```
 ┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
 │   Flutter App    │────▶│  Cloud Functions (Go) │────▶│  Cloud Run      │

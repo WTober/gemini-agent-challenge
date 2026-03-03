@@ -194,6 +194,7 @@ This Browser Agent is part of **GolfStatus** – a comprehensive AI-powered golf
 
 > **Want to try it?** The app is currently in testing. Access can be granted on request.
 >
+> 🌐 **Website:** [golfstatus-a8d6c.web.app](https://golfstatus-a8d6c.web.app/)
 > - 🤖 [Android – Google Play](https://play.google.com/store/apps/details?id=de.wolfgangtober.golfstatus)
 > - 🍎 [iOS – TestFlight](https://testflight.apple.com/join/SKzQgswR)
 

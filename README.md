@@ -154,12 +154,17 @@ curl -X POST http://localhost:8080 \
 
 ## 📹 Demo Video
 
-See [demo video on Devpost](https://geminiliveagentchallenge.devpost.com/) showing:
-1. **Skill Definition** – Admin creates booking steps
-2. **Agent Configuration** – Assign skill, set schedule trigger
-3. **Sandbox Test** – Admin tests without real booking
-4. **User Dashboard** – User views results and screenshots
-5. **Live Run** – Agent navigates PC Caddy booking page in real-time
+[![Demo Video](https://img.youtube.com/vi/7VSr2ahW3uk/maxresdefault.jpg)](https://youtu.be/7VSr2ahW3uk)
+
+**▶️ [Watch the Demo on YouTube](https://youtu.be/7VSr2ahW3uk)** (2:09 min)
+
+The demo shows:
+1. **Skill Definition** – Admin creates 31-step booking skill (DSL)
+2. **Agent Configuration** – User sets date, tee time, playing partners
+3. **Live Execution** – Agent navigates PC Caddy booking portal autonomously
+4. **Real-Time Logging** – Step-by-step admin dashboard with screenshots
+5. **Booking Confirmation** – Real reservation confirmed on the portal
+6. **Scheduled Execution** – Switch to weekly automated scheduling
 
 ## 👨‍💻 About the Developer
 

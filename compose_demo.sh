@@ -1,156 +1,102 @@
 #!/bin/bash
-# Compose the final demo video from screen_recorder1.mp4 + Veo assets
-# Extracts the best segments, adds them to background, crossfades with intro/outro
-#
-# Timeline of screen_recorder1.mp4 (5:19):
-# 0:00 - Skill Definition (DSL Steps, 31 Schritte)
-# 0:30 - Erfolgsbedingung, Sandbox, Trigger-Methoden
-# 1:00 - Agent bearbeiten (Eingaben)
-# 1:30 - Agent bearbeiten (komplett)
-# 2:00 - Datumseingabe
-# 2:30 - Agent-Liste + Start-Button
-# 3:00 - Agent läuft (Übersicht, User-Sicht, Igel)
-# 3:30 - Admin-Detail (Live Steps, Schritt 11-13)
-# 4:00 - Admin-Detail (Screenshot + Steps 24-25)
-# 4:30 - Schritt 29-30 Buchung erfolgreich
-# 5:00 - Ergebnis: Screenshots + "28 von 31 echt ausgeführt"
-# 5:19 - Ende
-
+# Demo Video v4 - Floating screens background + trimmed end + QuickTime compatible
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-SRC="${DIR}/screen_recorder1.mp4"
-BG="${DIR}/background_loop.mp4"
+SRC1="${DIR}/screen_recorder1.mp4"
+SRC2="${DIR}/screen_recorder2.mp4"
+BG="${DIR}/background_floating.mp4"   # NEW: floating screens background
 INTRO="${DIR}/intro_video.mp4"
 OUTRO="${DIR}/outro_video.mp4"
 OUTPUT="${DIR}/demo_final.mp4"
-TMP="/tmp/demo_compose"
+OUTPUT_QT="${DIR}/demo_final_qt.mp4"
+TMP="/tmp/demo_v4"
 
 mkdir -p "$TMP"
-
-echo "🎬 Compositing Demo Video"
-echo "   Source: $SRC (5:19)"
+echo "🎬 Demo Video v4 (Floating Screens + Trimmed)"
 echo ""
 
-# ── Segment extraction (best moments, speed up transitions) ────────────────
+# ── Extract & re-encode segments ──────────────────────────────────────────
 echo "✂️  Extracting segments..."
+# Recording 1
+ffmpeg -y -ss 0 -i "$SRC1" -t 12 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s1.mp4" 2>/dev/null
+ffmpeg -y -ss 28 -i "$SRC1" -t 12 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s2.mp4" 2>/dev/null
+ffmpeg -y -ss 85 -i "$SRC1" -t 12 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s3.mp4" 2>/dev/null
+ffmpeg -y -ss 145 -i "$SRC1" -t 10 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s4.mp4" 2>/dev/null
+ffmpeg -y -ss 175 -i "$SRC1" -t 13 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s5.mp4" 2>/dev/null
+ffmpeg -y -ss 205 -i "$SRC1" -t 10 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s6.mp4" 2>/dev/null
+ffmpeg -y -ss 265 -i "$SRC1" -t 10 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s7.mp4" 2>/dev/null
+# Segment 8: trimmed to 13s (was 15s) to cut screencapture stop notification
+ffmpeg -y -ss 295 -i "$SRC1" -t 13 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s8.mp4" 2>/dev/null
+# Recording 2 (scheduler)
+ffmpeg -y -ss 8 -i "$SRC2" -t 18 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s9.mp4" 2>/dev/null
+# Segment 10: trimmed to 5s (was 7s) to avoid screencapture stop
+ffmpeg -y -ss 28 -i "$SRC2" -t 5 -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -vf "scale=720:1560:force_original_aspect_ratio=decrease,pad=720:1560:(ow-iw)/2:(oh-ih)/2" -r 30 "$TMP/s10.mp4" 2>/dev/null
+echo "   ✅ 10 segments"
 
-# Segment 1: Skill Definition - DSL Steps (0:00 → 0:15, show the skill editor)
-ffmpeg -y -ss 0 -i "$SRC" -t 12 -c:v libx264 -preset fast -crf 23 "$TMP/seg1.mp4" 2>/dev/null
-echo "   ✅ Seg 1: Skill Editor (12s)"
+# ── Concatenate ────────────────────────────────────────────────────────────
+echo "🔗 Concatenating..."
+for i in $(seq 1 10); do echo "file 's${i}.mp4'"; done > "$TMP/list.txt"
+ffmpeg -y -f concat -safe 0 -i "$TMP/list.txt" -c copy "$TMP/screen.mp4" 2>/dev/null
+SDUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$TMP/screen.mp4")
+echo "   ✅ Screen: ${SDUR}s"
 
-# Segment 2: Erfolgsbedingung + Sandbox + Trigger (0:28 → 0:45)
-ffmpeg -y -ss 28 -i "$SRC" -t 12 -c:v libx264 -preset fast -crf 23 "$TMP/seg2.mp4" 2>/dev/null
-echo "   ✅ Seg 2: Sandbox + Trigger (12s)"
+# ── Loop floating-screens background ──────────────────────────────────────
+echo "🔄 Looping floating-screens background..."
+ffmpeg -y -stream_loop -1 -i "$BG" -t "$SDUR" \
+    -vf "scale=1280:720" -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -r 30 \
+    "$TMP/bg.mp4" 2>/dev/null
 
-# Segment 3: Agent Config - Eingaben sichtbar (1:25 → 1:40)
-ffmpeg -y -ss 85 -i "$SRC" -t 12 -c:v libx264 -preset fast -crf 23 "$TMP/seg3.mp4" 2>/dev/null
-echo "   ✅ Seg 3: Agent Config (12s)"
-
-# Segment 4: Agent-Liste mit Start-Button (2:25 → 2:40)
-ffmpeg -y -ss 145 -i "$SRC" -t 12 -c:v libx264 -preset fast -crf 23 "$TMP/seg4.mp4" 2>/dev/null
-echo "   ✅ Seg 4: Agent-Liste + Start (12s)"
-
-# Segment 5: Agent läuft (User view, Igel) (2:55 → 3:10)
-ffmpeg -y -ss 175 -i "$SRC" -t 15 -c:v libx264 -preset fast -crf 23 "$TMP/seg5.mp4" 2>/dev/null
-echo "   ✅ Seg 5: Agent läuft (15s)"
-
-# Segment 6: Admin-Detail Steps live (3:25 → 3:40)
-ffmpeg -y -ss 205 -i "$SRC" -t 12 -c:v libx264 -preset fast -crf 23 "$TMP/seg6.mp4" 2>/dev/null
-echo "   ✅ Seg 6: Admin-Detail Live (12s)"
-
-# Segment 7: Buchung erfolgreich Schritt 30 (4:25 → 4:40)
-ffmpeg -y -ss 265 -i "$SRC" -t 12 -c:v libx264 -preset fast -crf 23 "$TMP/seg7.mp4" 2>/dev/null
-echo "   ✅ Seg 7: Buchung erfolgreich (12s)"
-
-# Segment 8: Ergebnis Screenshots + Sandbox-Ergebnis (4:55 → 5:15)
-ffmpeg -y -ss 295 -i "$SRC" -t 18 -c:v libx264 -preset fast -crf 23 "$TMP/seg8.mp4" 2>/dev/null
-echo "   ✅ Seg 8: Ergebnis (18s)"
-
-# ── Concatenate all screen segments ────────────────────────────────────────
-echo ""
-echo "🔗 Concatenating screen segments..."
-
-cat > "$TMP/segments.txt" << EOF
-file 'seg1.mp4'
-file 'seg2.mp4'
-file 'seg3.mp4'
-file 'seg4.mp4'
-file 'seg5.mp4'
-file 'seg6.mp4'
-file 'seg7.mp4'
-file 'seg8.mp4'
-EOF
-
-ffmpeg -y -f concat -safe 0 -i "$TMP/segments.txt" \
-    -c:v libx264 -preset fast -crf 23 "$TMP/screen_cut.mp4" 2>/dev/null
-
-SCREEN_DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$TMP/screen_cut.mp4")
-echo "   ✅ Total screen: ${SCREEN_DUR}s"
-
-# ── Loop background to match screen duration ───────────────────────────────
-echo "🔄 Looping background..."
-ffmpeg -y -stream_loop -1 -i "$BG" -t "$SCREEN_DUR" \
-    -c:v libx264 -preset fast -crf 23 \
-    -vf "scale=1280:720" \
-    "$TMP/bg_looped.mp4" 2>/dev/null
-
-# ── Composite: phone on background ────────────────────────────────────────
-echo "📱 Compositing phone-on-background..."
+# ── Composite: phone over floating screens ────────────────────────────────
+echo "📱 Compositing phone on floating-screens..."
 ffmpeg -y \
-    -i "$TMP/bg_looped.mp4" \
-    -i "$TMP/screen_cut.mp4" \
+    -i "$TMP/bg.mp4" \
+    -i "$TMP/screen.mp4" \
     -filter_complex "
-        [0:v]scale=1280:720[bg];
-        [1:v]scale=-1:640,
-             pad=iw+20:ih+20:10:10:color=black@0.5[phone];
-        [bg][phone]overlay=(W-w)/2:(H-h)/2[out]
+        [1:v]scale=-1:600,
+             pad=iw+20:ih+20:10:10:color=0x000000AA,
+             fade=t=in:st=0:d=2:alpha=1,
+             fade=t=out:st=$(echo "$SDUR - 1.5" | bc):d=1.5:alpha=1
+             [phone];
+        [0:v][phone]overlay=(W-w)/2:(H-h)/2:format=auto,format=yuv420p[out]
     " \
     -map "[out]" \
-    -c:v libx264 -preset fast -crf 22 \
-    -t "$SCREEN_DUR" \
-    "$TMP/composite.mp4" 2>/dev/null
-echo "   ✅ Composite created"
+    -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p -r 30 \
+    -t "$SDUR" \
+    "$TMP/comp.mp4" 2>/dev/null
+echo "   ✅ Composite done"
 
-# ── Final: Intro + Composite + Outro with crossfades ──────────────────────
-echo "🎬 Final assembly with crossfades..."
-
-INTRO_DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$INTRO")
-COMP_DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$TMP/composite.mp4")
-OUTRO_DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUTRO")
-FADE=1
+# ── Final assembly ────────────────────────────────────────────────────────
+echo "🎬 Final assembly..."
+IDUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$INTRO")
+CDUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$TMP/comp.mp4")
+ODUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUTRO")
 
 ffmpeg -y \
-    -i "$INTRO" \
-    -i "$TMP/composite.mp4" \
-    -i "$OUTRO" \
+    -i "$INTRO" -i "$TMP/comp.mp4" -i "$OUTRO" \
     -filter_complex "
-        [0:v]scale=1280:720,setsar=1,fps=30[v0];
-        [1:v]scale=1280:720,setsar=1,fps=30[v1];
-        [2:v]scale=1280:720,setsar=1,fps=30[v2];
-        [v0][v1]xfade=transition=fade:duration=${FADE}:offset=$(echo "$INTRO_DUR - $FADE" | bc)[v01];
-        [v01][v2]xfade=transition=fade:duration=${FADE}:offset=$(echo "$INTRO_DUR + $COMP_DUR - 2*$FADE" | bc)[vout]
+        [0:v]scale=1280:720,setsar=1,fps=30,format=yuv420p[v0];
+        [1:v]scale=1280:720,setsar=1,fps=30,format=yuv420p[v1];
+        [2:v]scale=1280:720,setsar=1,fps=30,format=yuv420p[v2];
+        [v0][v1]xfade=transition=smoothleft:duration=1:offset=$(echo "$IDUR - 1" | bc)[v01];
+        [v01][v2]xfade=transition=smoothright:duration=1:offset=$(echo "$IDUR + $CDUR - 2" | bc)[vout]
     " \
     -map "[vout]" \
-    -c:v libx264 -preset medium -crf 20 \
+    -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p -movflags +faststart \
     "$OUTPUT" 2>/dev/null
 
-# ── Summary ───────────────────────────────────────────────────────────────
-echo ""
-FINAL_DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUTPUT")
-FINAL_SIZE=$(du -h "$OUTPUT" | cut -f1)
+cp "$OUTPUT" "$OUTPUT_QT"
 
-echo "════════════════════════════════════════════════"
-echo "✅ Demo video created!"
-echo "   📹 Output:   $OUTPUT"
-echo "   ⏱️  Duration: ${FINAL_DUR}s ($(echo "scale=1; $FINAL_DUR / 60" | bc) min)"
-echo "   📦 Size:     $FINAL_SIZE"
-echo ""
-echo "   Breakdown:"
-echo "   🎬 Intro:     ${INTRO_DUR}s"
-echo "   📱 Demo:      ${COMP_DUR}s (8 segments from 5:19 original)"
-echo "   🎬 Outro:     ${OUTRO_DUR}s"
-echo "════════════════════════════════════════════════"
+FDUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUTPUT")
+FSIZE=$(du -h "$OUTPUT" | cut -f1)
 
-# Cleanup
+echo ""
+echo "════════════════════════════════════════════"
+echo "✅ Demo v4 ready!"
+echo "   📹 ${OUTPUT##*/}  |  ⏱️ ${FDUR}s ($(echo "scale=1; $FDUR / 60" | bc) min)  |  📦 $FSIZE"
+echo "   ✨ Floating screens BG + fade-in phone + smooth transitions"
+echo "   ✨ Screencapture notification trimmed"
+echo "   ✨ QuickTime compatible"
+echo "════════════════════════════════════════════"
+
 rm -rf "$TMP"

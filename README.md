@@ -57,6 +57,15 @@ Golf clubs use booking systems like **PC Caddy** where reservations open exactly
 | **Mobile App** | Flutter (Dart) | Firebase |
 | **Scheduling** | Cloud Scheduler | Cloud Scheduler |
 
+### Cloud Functions (Go Orchestration)
+
+The `cloud_functions/` directory contains the Go Cloud Functions that orchestrate agent runs:
+
+- **`scheduler.go`** – Triggered every 15 minutes by Cloud Scheduler. Matches user-configured schedules (weekly/daily/monthly) against the current time and triggers due agent runs.
+- **`run_agent.go`** – Core agent execution: creates run documents in Firestore, routes to the appropriate executor (Gemini prompt or browser automation), and manages credits.
+
+> **Key fix (March 2026):** Scheduled runs were stuck at 0 steps because `go executeAgentRun(...)` goroutines were killed when the Cloud Function returned its HTTP response. Fixed with `sync.WaitGroup` to ensure all runs complete before the function exits.
+
 ## 🔄 How It Works
 
 ### The Vision-Action Loop

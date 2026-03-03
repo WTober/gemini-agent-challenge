@@ -1,0 +1,6 @@
+functions-framework>=3.0.0
+playwright>=1.40.0
+google-cloud-firestore>=2.14.0
+google-genai>=1.0.0
+google-cloud-secret-manager>=2.16.0
+Pillow>=10.0.0

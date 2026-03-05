@@ -51,6 +51,7 @@ Golf clubs use booking systems like **PC Caddy** where reservations open exactly
 | Component | Technology | Google Cloud Service |
 |---|---|---|
 | **Vision AI** | Gemini 2.5 Flash (multimodal) | Vertex AI / GenAI SDK |
+| **NL Skill Compiler** | Gemini 3.1 Flash Lite | Vertex AI / GenAI SDK |
 | **Browser** | Playwright (headless Chromium) | Cloud Run |
 | **Orchestration** | Go Cloud Functions (2nd Gen) | Cloud Functions |
 | **Data Store** | Firestore | Firestore |
@@ -94,6 +95,35 @@ Admins define skills as a sequence of steps:
 ```
 
 The `find_click` action is key: it tells Gemini to **visually search** for the best matching element – ideal for finding the first free slot in a calendar grid.
+
+### 🇩🇪 Natural Language Skill Compiler (NEW)
+
+Skills can also be defined in **plain German** and compiled into executable commands:
+
+```
+Input:  "Navigiere zur Login-Seite, gib Benutzername und Passwort ein,
+         klicke auf Anmelden und warte auf die Startseite."
+
+Output:
+  # Navigiere zur Login-Seite
+  navigate: https://booking.example.com/login
+  # gib Benutzername ein
+  input: E-Mail-Feld -> {username}
+  # und Passwort ein
+  input: Passwort-Feld -> {password}
+  # klicke auf Anmelden
+  click: Anmelden-Button
+  # warte auf die Startseite
+  wait_for: Dashboard
+```
+
+- **Bidirectional**: Compile (NL → Commands) **and** Decompile (Commands → NL)
+- **Knowledge Base**: A comprehensive system prompt teaches the model all 17 available actions, Playwright API calls, placeholder syntax, and conventions
+- **Lint & Validation**: Each compiled line is validated against known commands
+- **Admin-configurable model**: Defaults to `gemini-3.1-flash-lite-preview` (fast & cost-efficient), changeable via Firestore config
+- **Original text preserved**: Natural language is kept as `# comments` for documentation
+
+This is powered by a dedicated **Go Cloud Function** (`CompileSkill`) using Vertex AI.
 
 ### Sandbox Mode
 

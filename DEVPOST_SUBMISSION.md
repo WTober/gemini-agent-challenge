@@ -42,6 +42,8 @@ The agent navigates login forms, calendars, time pickers, player registration, a
 
 - **Skill DSL:** Admins define agent behavior as a sequence of steps in a simple JSON-based DSL. Actions include `click`, `find_click` (visual search), `input`, `screenshot`, `wait`, `abort_if`, and more. The `find_click` action is key – it tells Gemini to visually locate the best matching UI element, perfect for finding the first available slot in a calendar grid.
 
+- **Natural Language Skill Compiler (NEW):** Skills can also be written in **plain German prose** and compiled into executable commands by a dedicated Cloud Function powered by Gemini 3.1 Flash Lite. The compiler is bidirectional – commands can be decompiled back to human-readable text. A built-in lint pass validates each line against the 17 known actions.
+
 - **Orchestration (Cloud Functions, Go):** Manages agent lifecycle, resolves input placeholders, enforces sandbox mode, and writes real-time step logs to Firestore.
 
 - **Sandbox Mode:** Every run can be executed in sandbox mode – the agent navigates and screenshots everything but does NOT click submit buttons. Safe for testing and demos.
@@ -53,6 +55,7 @@ The agent navigates login forms, calendars, time pickers, player registration, a
 | Component | Technology | Google Cloud Service |
 |---|---|---|
 | Vision AI | Gemini 2.5 Flash (multimodal) | Vertex AI / GenAI SDK |
+| NL Skill Compiler | Gemini 3.1 Flash Lite | Vertex AI / GenAI SDK |
 | Browser | Playwright (headless Chromium) | **Cloud Run** |
 | Orchestration | Go Cloud Functions (2nd Gen) | **Cloud Functions** |
 | Data Store | Firestore real-time | **Firestore** |

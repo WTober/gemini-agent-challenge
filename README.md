@@ -4,7 +4,7 @@
 
 ## 🎯 What It Does
 
-An **autonomous UI Navigator** that navigates complex web interfaces using only visual understanding – no DOM access, no APIs. The agent observes the screen through screenshots, interprets UI elements with **Gemini Vision**, and executes actions to complete multi-step workflows.
+An **autonomous UI Navigator** that navigates complex web interfaces using a **hybrid approach** – combining Gemini Vision for intelligent decisions with deterministic DOM-based actions for reliability. The agent observes the screen through screenshots, interprets UI elements with **Gemini Vision**, and executes actions to complete multi-step workflows.
 
 ### Real-World Use Case: Automated Tee Time Booking
 
@@ -83,18 +83,43 @@ Screenshot → Gemini Vision → Action Decision → Execute → Screenshot → 
 
 ### Skill Definition (DSL)
 
-Admins define skills as a sequence of steps:
+Admins define skills as a sequence of steps using 18+ available commands:
 
-```json
-[
-  {"action": "click", "target": "https://booking.example.com"},
-  {"action": "find_click", "target": "first available Saturday tee time"},
-  {"action": "input", "target": "Name field", "value": "{player_name}"},
-  {"action": "find_click", "target": "Confirm booking button"}
-]
+```yaml
+# Deterministic steps (Playwright)
+navigate: https://booking.example.com/login
+js: document.getElementById('login').value='{username}'
+playwright: page.get_by_role("button", name="Sign In").click()
+
+# Intelligent slot selection (Hybrid: JS reads DOM attributes + Python time logic)
+find_slot: {target_time} -> {max_time}
+
+# Visual search (Gemini Vision)
+find_click: first available Saturday tee time
+
+# Fully autonomous mode (Gemini decides all actions)
+autonomous: Book a tee time on {target_date} at {target_time}
 ```
 
-The `find_click` action is key: it tells Gemini to **visually search** for the best matching element – ideal for finding the first free slot in a calendar grid.
+### 🎯 Hybrid Approach: `find_slot` (NEW)
+
+The `find_slot` command demonstrates the **best of both worlds**:
+
+1. **JavaScript** reads DOM attributes (`data-time`, `data-status="bookable"`) to find all available slots
+2. **Python logic** selects the nearest time ≥ target within the allowed range
+3. **Playwright** performs a real mouse click on the selected row
+
+This is more reliable than pure vision (Gemini can't read small text in calendars) and more adaptive than hardcoded selectors (it finds the *best available* time, not a fixed one).
+
+### 🤖 Autonomous Mode
+
+For maximum flexibility, the `autonomous` action hands full control to Gemini. The agent:
+1. Extracts page content as text
+2. Sends it to Gemini with the goal description
+3. Gemini decides which action to take (click, input, scroll, etc.)
+4. Repeats up to 15 steps until the goal is achieved
+
+This is ideal for one-off tasks on unfamiliar websites where defining a skill would be overkill.
 
 ### 🇩🇪 Natural Language Skill Compiler (NEW)
 
@@ -118,7 +143,7 @@ Output:
 ```
 
 - **Bidirectional**: Compile (NL → Commands) **and** Decompile (Commands → NL)
-- **Knowledge Base**: A comprehensive system prompt teaches the model all 17 available actions, Playwright API calls, placeholder syntax, and conventions
+- **Knowledge Base**: A comprehensive system prompt teaches the model all 18+ available actions, Playwright API calls, placeholder syntax, and conventions
 - **Lint & Validation**: Each compiled line is validated against known commands
 - **Admin-configurable model**: Defaults to `gemini-3.1-flash-lite-preview` (fast & cost-efficient), changeable via Firestore config
 - **Original text preserved**: Natural language is kept as `# comments` for documentation

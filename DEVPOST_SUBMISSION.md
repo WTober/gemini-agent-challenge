@@ -44,6 +44,16 @@ Admins can **record browser sessions** as reusable knowledge base segments – n
 
 This "record once, reuse forever" approach dramatically reduces the time to support a new booking portal from days to under 30 minutes. Each segment stores the exact DOM selectors captured during recording, making execution deterministic – with Gemini Vision as the safety net when selectors change.
 
+### 🌐 Broader Multimodal Ecosystem
+
+The same Gemini Vision infrastructure powers two additional features in GolfStatus:
+
+- **🦔 Rules Hedgehog** – Snap a photo of your ball on the course → Gemini Vision analyzes the exact position and delivers instant, official rule guidance. Vision in, ruling out.
+- **🎨 AI Presentation Generator (Gamma)** – After each agent run, results are auto-compiled into a rich visual presentation: screenshots, step log, booking confirmation – all in one shareable document. The agent doesn't just act, it reports.
+
+Both features share the same Gemini multimodal pipeline, demonstrating that the architecture generalises far beyond browser automation.
+
+
 ### How we built it
 
 **Architecture:** Flutter mobile app → Cloud Functions (Go) → Cloud Run (Playwright + Gemini Vision)

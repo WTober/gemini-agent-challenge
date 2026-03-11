@@ -150,6 +150,19 @@ Output:
 
 This is powered by a dedicated **Go Cloud Function** (`CompileSkill`) using Vertex AI.
 
+### 📹 Knowledge Base Segment Recording (NEW)
+
+A **no-code workflow recorder** that captures browser interactions as reusable segments:
+
+| Step | What happens |
+|------|--------------|
+| **1. Record** | Admin uses the in-app Chrome recorder to capture a workflow segment (login, club selection, date picker, etc.) |
+| **2. Store** | Segment is saved to Firestore with exact CSS selectors captured from the DOM |
+| **3. Compose** | Load 4 segments into a new skill — the app generates the full DSL automatically |
+| **4. Run** | Agent executes with deterministic CSS selectors + Gemini Vision as fallback |
+
+**Why this matters:** Onboarding a new booking portal goes from **days of coding** to **under 30 minutes of recording**. The CSS selectors are captured precisely during the recording — no selector guessing, no prompt engineering needed.
+
 ### Sandbox Mode
 
 Every agent run can be executed in **Sandbox mode** – the agent navigates and screenshots everything, but does NOT submit forms or trigger real bookings. Perfect for testing and demos.

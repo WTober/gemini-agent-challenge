@@ -34,6 +34,16 @@ The **GolfStatus Browser Agent** is a fully autonomous UI Navigator that:
 
 The agent navigates login forms, calendars, time pickers, player registration, and booking confirmation – all through visual understanding alone.
 
+### Knowledge Base Segment Recording (NEW)
+
+Admins can **record browser sessions** as reusable knowledge base segments – no coding required:
+
+1. **Record** – Use the in-app recorder to capture a workflow segment (e.g., "login", "club selection", "date picker")
+2. **Compose** – Load 4 segments into a new skill in the Admin UI
+3. **Run** – The skill is automatically generated with precise CSS selectors + AI fallback
+
+This "record once, reuse forever" approach dramatically reduces the time to support a new booking portal from days to under 30 minutes. Each segment stores the exact DOM selectors captured during recording, making execution deterministic – with Gemini Vision as the safety net when selectors change.
+
 ### How we built it
 
 **Architecture:** Flutter mobile app → Cloud Functions (Go) → Cloud Run (Playwright + Gemini Vision)
@@ -78,7 +88,8 @@ The agent navigates login forms, calendars, time pickers, player registration, a
 
 ### What's next
 
-- **Multi-portal support:** Expand beyond PC Caddy to other booking systems
+- **Multi-portal support:** KB Segment Recording enables any golf booking portal to be onboarded in under 30 minutes – already in progress for additional systems
+- **Self-healing selectors:** When a portal updates its UI, the agent re-learns selectors via Vision and updates the KB segment automatically
 - **Voice control:** "Hey GolfStatus, book me a tee time for Saturday" via Gemini Live API
 - **Intelligent slot selection:** Let Gemini choose the optimal time based on weather forecasts and player availability
 

@@ -29,20 +29,23 @@ The **GolfStatus Browser Agent** is a fully autonomous UI Navigator that:
 - **Observes** the browser through screenshots (no DOM access, no APIs)
 - **Understands** each page using **Gemini 2.5 Flash** multimodal vision
 - **Acts** by clicking, typing, and scrolling at precise screen coordinates
-- **Completes** complex 31-step workflows across real booking portals
+- **Completes** complex 74-step workflows across real booking portals
 - **Runs on schedule** – weekly at a specific day and time, fully unattended
 
 The agent navigates login forms, calendars, time pickers, player registration, and booking confirmation – all through visual understanding alone.
+
+This implements the **"Digital Optimus" paradigm**: a software agent that performs physical-world tasks (booking a tee time, securing a reservation) through digital interfaces – combining deterministic DOM access with AI vision, just like a robot combines sensors with cameras.
 
 ### Knowledge Base Segment Recording (NEW)
 
 Admins can **record browser sessions** as reusable knowledge base segments – no coding required:
 
 1. **Record** – Use the in-app recorder to capture a workflow segment (e.g., "login", "club selection", "date picker")
-2. **Compose** – Load 4 segments into a new skill in the Admin UI
-3. **Run** – The skill is automatically generated with precise CSS selectors + AI fallback
+2. **Enrich** – Add validation steps (`wait_for`, `screenshot`) at critical checkpoints so the agent fails fast instead of continuing on the wrong page
+3. **Compose** – Load 4 segments into a new skill in the Admin UI
+4. **Run** – The skill uses a **3-tier execution strategy**: Playwright CSS → Gemini Vision → Text search
 
-This "record once, reuse forever" approach dramatically reduces the time to support a new booking portal from days to under 30 minutes. Each segment stores the exact DOM selectors captured during recording, making execution deterministic – with Gemini Vision as the safety net when selectors change.
+This "record once, reuse forever" approach dramatically reduces the time to support a new booking portal from days to under 30 minutes. Each segment stores Playwright selectors with built-in validation checkpoints. A **KB Feedback Loop** automatically writes execution results (which selectors worked, which needed fallbacks, timing per step) back to Firestore after each real run – building the foundation for self-improving skills.
 
 ### 🌐 Broader Multimodal Ecosystem
 
@@ -88,20 +91,25 @@ Both features share the same Gemini multimodal pipeline, demonstrating that the 
 
 ### Challenges and Learnings
 
-1. **Vision-only navigation is hard.** Early versions struggled with dropdowns and overlapping elements. We learned that Gemini works best with clean screenshots and precise prompts that describe what to look for ("the green button labeled Submit"), not abstract concepts.
+1. **Vision is a safety net, not a primary strategy.** Gemini Vision struggles when the same text appears in multiple places (e.g., a club name in both search input and result list). We learned that **direct DOM access** (Playwright CSS selectors, `has-text()`, `>>` text chaining) is far more reliable for known flows – with Vision as the fallback for unknown pages or changed layouts.
 
-2. **Timing matters.** A booking agent needs to act at the exact right moment. We integrated Cloud Scheduler to trigger runs precisely when reservation windows open – making this a truly autonomous system.
+2. **Recorded selectors need curation.** CSS selectors captured during recording are often too specific (`div.pcco-country-wrap > div.pcco-club > a.pcco-club-select`) and break on minor DOM changes. We refined them to robust alternatives: `#container >> text={variable}` for scoped text matching, `a:has-text('Menu Item')` for navigation.
 
-3. **Sandbox mode was essential.** During development, the agent accidentally booked real tee times. Sandbox mode (Gemini still plans every action, but form submissions are skipped) became crucial for safe iteration.
+3. **Validation checkpoints are essential.** Adding `wait_for` + `screenshot` after every critical step (login, page transitions) catches failures immediately instead of letting the agent continue on the wrong page for 20+ steps.
 
-4. **The human touch.** Built by a 70-year-old developer with 50+ years of experience – from IBM mainframes to modern cloud-native architecture. This project proves that passion for building never gets old.
+4. **Timing matters.** A booking agent needs to act at the exact right moment. We integrated Cloud Scheduler to trigger runs precisely when reservation windows open – making this a truly autonomous system.
+
+5. **Sandbox mode was essential.** During development, the agent accidentally booked real tee times. Sandbox mode (Gemini still plans every action, but form submissions are skipped) became crucial for safe iteration.
+
+6. **The human touch.** Built by a 70-year-old developer with 50+ years of experience – from IBM mainframes to modern cloud-native architecture. This project proves that passion for building never gets old.
 
 ### What's next
 
 - **Multi-portal support:** KB Segment Recording enables any golf booking portal to be onboarded in under 30 minutes – already in progress for additional systems
-- **Self-healing selectors:** When a portal updates its UI, the agent re-learns selectors via Vision and updates the KB segment automatically
+- **Self-healing selectors:** The KB Feedback Loop already captures which selectors fail per run. Next step: automatic selector correction – when a CSS selector fails repeatedly, the agent proposes a Vision-based or text-based alternative and updates the KB segment
 - **Voice control:** "Hey GolfStatus, book me a tee time for Saturday" via Gemini Live API
 - **Intelligent slot selection:** Let Gemini choose the optimal time based on weather forecasts and player availability
+- **Vision-first mode:** As Gemini Vision improves, progressively shift from CSS-primary to Vision-primary execution – the 3-tier architecture is already designed for this transition
 
 ---
 

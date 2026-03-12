@@ -1,3 +1,16 @@
+// scheduler.go – Scheduled Agent Execution (Gemini Live Agent Challenge)
+//
+// Triggered every 15 minutes by Cloud Scheduler. Scans all user agents with
+// trigger="scheduled" and runs those whose scheduleConfig matches the current
+// time window (in the user's local timezone).
+//
+// Key design decisions:
+//   - Timezone-aware: each user has an IANA timezone, schedule matching happens
+//     in local time (a user in Asia/Kuala_Lumpur gets their 21:00 trigger at
+//     their local 21:00, not UTC 21:00)
+//   - Double-execution guard: lastScheduledRun prevents re-triggering within 14 min
+//   - sync.WaitGroup: goroutines MUST complete before the Cloud Function returns,
+//     otherwise Cloud Functions kills them on exit (this was a critical bug fix)
 package function
 
 import (
@@ -255,7 +268,9 @@ func RunScheduledAgents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Wait for all triggered agent runs to complete before returning.
-	// This prevents Cloud Functions from killing goroutines on exit.
+	// CRITICAL: Without this WaitGroup, Cloud Functions kills goroutines when
+	// the HTTP handler returns. This caused scheduled runs to show 0 steps
+	// because executeAgentRun was terminated mid-execution. Fixed March 2026.
 	log.Printf("RunScheduledAgents: Waiting for %d agent runs to complete...", triggered)
 	wg.Wait()
 

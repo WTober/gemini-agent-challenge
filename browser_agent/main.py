@@ -1,13 +1,26 @@
 """
-Python 3.12 Cloud Function (2nd Gen): RunBrowserAgent
-Receives an HTTP request from the Go RunUserAgent backend,
-executes a browser automation sequence using Playwright + Gemini Vision,
-and writes live step updates to Firestore agent_runs/{runId}.
+GolfStatus Browser Agent – Cloud Run Service (Gemini Live Agent Challenge)
+
+Core of the autonomous UI Navigator: receives an HTTP request from the
+Go orchestration layer (Cloud Functions), launches a headless Chromium
+browser via Playwright, and executes a multi-step action sequence.
+
+Hybrid Architecture:
+  - DETERMINISTIC actions (navigate, js, playwright) use Playwright API directly
+  - INTELLIGENT actions (click, find_click) use Gemini Vision to locate UI elements
+    by analysing screenshots, then click at the returned (x, y) coordinates
+
+Each step is logged in real-time to Firestore (agent_runs/{runId}), enabling
+a live dashboard in the Flutter mobile app.
+
+Deployed as: Cloud Run service (europe-west3, 2 vCPU, 2GB RAM)
 """
 import base64
+import datetime
 import json
 import logging
 import os
+import re
 import time
 import functions_framework
 from flask import Request, jsonify
@@ -101,9 +114,12 @@ def RunBrowserAgent(request: Request):
 
 
 # ─── Natural Language Date Resolution ────────────────────────────────────────
+# Users can enter dates as "nächsten Samstag", "morgen", "+6" etc.
+# These are resolved to DD.MM.YYYY before the browser automation starts.
+# Local Python resolution handles common cases; Gemini is the fallback.
 
-import re as _re
 from datetime import datetime as _datetime, timedelta as _timedelta
+_re = re  # alias for backward compat with existing code
 
 _DATE_PATTERN = _re.compile(r'^\d{1,2}\.\d{1,2}\.\d{4}$')
 _DATE_KEYWORDS = [
@@ -258,6 +274,13 @@ def _execute_browser_run(
     _resolve_natural_dates(input_values, run_id)
 
     with sync_playwright() as p:
+        # ── Anti-Detection & Browser Stealth ──────────────────────────────
+        # Many booking portals (e.g. PC Caddy) use bot-detection. These
+        # flags prevent Chromium from being identified as automated:
+        # - AutomationControlled: removes the "Chrome is being controlled by
+        #   automated software" infobar and navigator.webdriver flag
+        # - Custom User-Agent: mimics a real desktop browser
+        # - German Accept-Language: matches the target portal locale
         browser = p.chromium.launch(
             headless=True,
             args=[
@@ -281,7 +304,10 @@ def _execute_browser_run(
                 "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
             },
         )
-        # Hide navigator.webdriver + pre-set CookieConsent + auto-dismiss cookie banners
+        # ── Cookie Consent Auto-Dismiss ───────────────────────────────────
+        # Booking portals show cookie banners that block UI interaction.
+        # We pre-set the CookieBot consent cookie AND poll for common
+        # accept buttons to ensure the agent never gets stuck on a banner.
         context.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
             // Pre-set CookieBot consent cookie so banner never appears
@@ -377,7 +403,18 @@ class AbortStepError(Exception):
 
 
 def _execute_step(page: Page, step_def: dict, input_values: dict, run_id: str, dry_run: bool = False) -> None:
-    """Execute a single action sequence step using Gemini Vision for element location."""
+    """
+    DSL Command Router – dispatches a single skill step to the correct handler.
+
+    Each step from the action sequence is routed based on its 'action' field:
+    - Deterministic actions (navigate, js, playwright, press) use Playwright directly
+    - Vision actions (click, find_click, input_text) use Gemini to locate elements
+    - Control flow (abort_if, if_input, wait_for) use Gemini for visual verification
+
+    In Sandbox mode (dry_run=True), actions are simulated: Gemini still locates
+    elements but no real clicks or form submissions happen. Individual steps can
+    override this with sandboxOff=True for hybrid test/real execution.
+    """
     DRY = dry_run  # shorthand
     step_num = step_def.get("step", "?")
     action = step_def.get("action", "")
@@ -525,7 +562,8 @@ def _execute_step(page: Page, step_def: dict, input_values: dict, run_id: str, d
             except Exception as e:
                 _write_step(run_id, "⚠️ JS Fehler", str(e)[:80])
     elif action == "playwright":
-        # Execute raw Playwright API call (from codegen output) with {placeholder} substitution.
+        # Execute raw Playwright API call (from codegen or KB segment recording).
+        # {placeholder} values are substituted from user inputValues.
         # Example: page.get_by_role("button", name="Login").click()
         pw_code = target_desc or raw_value
         # Strip any accidental playwright:/!playwright: prefix
@@ -541,7 +579,7 @@ def _execute_step(page: Page, step_def: dict, input_values: dict, run_id: str, d
             .replace('\u2018', "'").replace('\u2019', "'")   # 'single curly'
             .replace('\u201e', '"').replace('\u201a', "'"))  # German „low"
         # Auto-convert German date format DD.MM.YYYY → YYYY-MM-DD (for DAY| PcCaddie selectors)
-        import re as _re
+        _re = re  # use top-level import
         def _de_to_iso(m):
             d, mo, y = m.group(1), m.group(2), m.group(3)
             return f"DAY|{y}-{mo}-{d}"
@@ -555,6 +593,9 @@ def _execute_step(page: Page, step_def: dict, input_values: dict, run_id: str, d
         if DRY:
             _write_step(run_id, f"🧪 Würde Playwright ausführen", log_code[:120])
         else:
+            # SECURITY NOTE: pw_code is sourced exclusively from admin-defined skills
+            # stored in Firestore (config/agent_skills), NOT from end-user input.
+            # Only users with admin privileges can create or modify skills.
             try:
                 exec(pw_code, {"page": page, "expect": None})  # noqa: S102
                 _write_step(run_id, "🎭 Playwright", log_code[:120])
@@ -597,6 +638,11 @@ def _execute_step(page: Page, step_def: dict, input_values: dict, run_id: str, d
 
 
 # ─── Gemini Vision Helpers ──────────────────────────────────────────────────────
+# The vision layer is the core innovation: instead of fragile CSS selectors,
+# we send screenshots to Gemini and ask it to locate UI elements by description.
+# This makes the agent resilient to UI changes – if a button moves or changes
+# color, Gemini still finds it. CSS selectors are used as a fast path when
+# available (from KB segment recordings), with vision as the fallback.
 
 def _screenshot_b64(page: Page) -> str:
     """Take a screenshot and return as base64."""
@@ -647,7 +693,9 @@ def _gemini_locate(screenshot_b64: str, description: str) -> dict | None:
 
 
 def _vision_click(page: Page, description: str, run_id: str) -> None:
-    """Take a screenshot, ask Gemini where the element is, then click it."""
+    """Locate a specific, known element via Gemini Vision and click it.
+    Falls back to Playwright text search if vision fails.
+    Use this for elements with a clear, unique description (e.g. 'Login button')."""
     screenshot_b64 = _screenshot_b64(page)
     coords = _gemini_locate(screenshot_b64, description)
 
@@ -669,10 +717,18 @@ def _vision_click(page: Page, description: str, run_id: str) -> None:
 
 def _vision_find_click(page: Page, description: str, run_id: str, dry_run: bool = False) -> None:
     """
-    Smart visual search: finds the FIRST available/matching element and clicks it.
-    Unlike _vision_click, this explicitly instructs Gemini to find the best match
-    even if it's not an exact text hit – ideal for finding first free tee slots,
-    first available button in a grid, etc.
+    HYBRID APPROACH – the key differentiator of this agent.
+
+    Unlike _vision_click (which locates a specific known element), find_click
+    performs an intelligent visual SEARCH: it asks Gemini to find the BEST
+    matching element on the page, even without an exact text match.
+
+    This is critical for booking scenarios where the agent needs to find:
+    - The first AVAILABLE time slot (ignoring grayed-out ones)
+    - The nearest slot >= target time (e.g. 'first free slot from 11:00')
+    - A specific option in a visual grid (not a standard <select>)
+
+    The prompt is in German to match the booking portal language.
     """
     screenshot_b64 = _screenshot_b64(page)
     _write_step(run_id, f"🔎 Suche: {description}", "Analysiere Seite...")
@@ -694,7 +750,7 @@ def _vision_find_click(page: Page, description: str, run_id: str, dry_run: bool 
                 types.Part.from_text(text=prompt),
             ],
         )
-        import json, re as _re
+        _re = re  # use top-level import
         raw = response.text.strip()
         m = _re.search(r'\{[^}]+\}', raw)
         if m:
@@ -724,7 +780,7 @@ def _check_if_input(condition: str, input_values: dict, run_id: str) -> None:
     Syntax: "{variable} == value"  or  "{variable} != value"
     If condition is NOT met, raises AbortStepError to skip remaining steps.
     """
-    import re as _re
+    _re = re  # use top-level import
     # Resolve placeholders first
     resolved = condition
     for key, val in input_values.items():
@@ -755,7 +811,7 @@ def _check_if_input(condition: str, input_values: dict, run_id: str) -> None:
 
 def _looks_like_date(value: str) -> bool:
     """Return True if value already looks like a concrete date (DD.MM.YYYY, YYYY-MM-DD etc.)."""
-    import re
+    # re is imported at module level
     patterns = [
         r"^\d{1,2}\.\d{1,2}\.\d{4}$",   # 22.03.2026
         r"^\d{4}-\d{2}-\d{2}$",           # 2026-03-22
@@ -770,7 +826,7 @@ def _resolve_date_expression_if_needed(value: str, run_id: str) -> str | None:
     ask Gemini to resolve it to a concrete date in DD.MM.YYYY format.
     Returns the resolved date string, or None if value doesn't look date-related.
     """
-    import datetime
+    # datetime imported at module level
     date_keywords = [
         "montag", "dienstag", "mittwoch", "donnerstag", "freitag",
         "samstag", "sonntag", "morgen", "übermorgen", "nächste",
@@ -817,7 +873,7 @@ def _check_precondition(
     for key, val in input_values.items():
         condition = condition.replace(f"{{{key}}}", val)
 
-    import datetime
+    # datetime imported at module level
     today = datetime.date.today().strftime("%d.%m.%Y")
     _write_step(run_id, "🔍 Vorbedingung prüfen", condition)
 
@@ -987,7 +1043,7 @@ def _screenshot_jpeg_b64(page) -> str:
 def _write_step(run_id: str, action: str, detail: str,
                 is_error: bool = False, screenshot: str = "") -> None:
     """Append a step to the agent run document in Firestore."""
-    import datetime
+    # datetime imported at module level
     log.info(f"[Step] {action}: {detail[:100]}")
     try:
         db = _firestore()

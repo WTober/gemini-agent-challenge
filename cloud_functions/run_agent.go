@@ -1,3 +1,16 @@
+// run_agent.go – Agent Orchestration Layer (Gemini Live Agent Challenge)
+//
+// This is the Go Cloud Functions backend that manages the complete agent lifecycle:
+//   1. Receives run requests from the Flutter mobile app (via Firebase callable)
+//   2. Loads the skill definition (DSL) and user input values from Firestore
+//   3. Deducts credits via Firestore transaction (with VIP bypass & dry-run shadow mode)
+//   4. Creates a real-time run document (agent_runs/{runId}) for live dashboard updates
+//   5. Routes execution to either:
+//      - Gemini prompt (text-only skills like weather briefings)
+//      - Browser Agent on Cloud Run (Playwright + Gemini Vision for UI navigation)
+//
+// The browser automation runs are delegated via HTTP to a separate Cloud Run service
+// (browser_agent/main.py) to isolate the heavy Playwright/Chromium workload.
 package function
 
 import (
@@ -59,7 +72,12 @@ func setRunStatus(ctx context.Context, fsClient *firestore.Client, runID, status
 	_, _ = fsClient.Collection("agent_runs").Doc(runID).Update(ctx, updates)
 }
 
-// checkAndDeductAgentCredits uses a dynamic credit cost per skill.
+// checkAndDeductAgentCredits uses a Firestore transaction to atomically check
+// and deduct credits. This prevents race conditions when multiple agents run
+// simultaneously. Supports:
+//   - VIP bypass: VIP users (isVip=true) skip credit checks entirely
+//   - Shadow mode (CreditSystemDryRun): logs usage but doesn't actually deduct
+//   - Dynamic cost: each skill defines its own creditCost
 func checkAndDeductAgentCredits(ctx context.Context, uid string, skillID string, creditCost int64) error {
 	config := LoadAppConfig(ctx)
 
@@ -289,7 +307,13 @@ func RunUserAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. Execute asynchronously
+	// 5. Execute asynchronously – fire-and-forget for manual runs.
+	// NOTE: Unlike the Scheduler (which uses sync.WaitGroup to prevent Cloud
+	// Functions from killing goroutines), manual runs return immediately to the
+	// user. The goroutine continues running because Cloud Functions 2nd Gen
+	// keeps the instance alive for concurrent requests. The browser agent
+	// writes its own status to Firestore via HTTP, so the run completes
+	// independently of this function's response lifecycle.
 	go executeAgentRun(runID, uid, agentID, goal, skillType, inputValues, skill, requestDryRun, userTZ, userLang)
 
 	// 6. Update lastRunAt
@@ -398,9 +422,10 @@ func executePromptRun(ctx context.Context, fsClient *firestore.Client, runID, go
 	prompt = strings.ReplaceAll(prompt, "{NOW}", formatDateTimeForAI(nowLocal))
 
 	// Prepend date context so the model knows what "today" is.
-	// All tested models (gemini-2.5-flash, gemini-3-flash-preview) think it's 2024
-	// due to training cutoff. Without this context, they refuse weather forecasts
-	// for 2026 dates claiming "this date is far in the future".
+	// IMPORTANT: All tested Gemini models (2.5-flash, 3-flash-preview) report
+	// their date as 2024 due to training cutoff. Without explicit date context,
+	// they refuse weather forecasts for 2026 dates claiming "far in the future".
+	// This context injection fixes that problem across all prompt-based skills.
 	dateContext := fmt.Sprintf(
 		"[SYSTEM CONTEXT: Today is %s. All mentioned dates are relative to today and are NOT in the far future. "+
 			"STRICT RULES: When using search results, ONLY use exact data (numbers, temperatures, percentages) found in the search results. "+

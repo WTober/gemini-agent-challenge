@@ -1,3 +1,15 @@
+// compile_skill.go – Natural Language Skill Compiler (Gemini Live Agent Challenge)
+//
+// Bidirectional NL ↔ Skill Command compiler powered by Gemini (Vertex AI).
+// Enables admins to define browser automation skills in plain German prose,
+// which are then compiled into executable DSL commands.
+//
+// Innovation:
+//   - Compile:   "Navigiere zur Login-Seite, gib Benutzername ein..." → navigate: ..., input: ...
+//   - Decompile: navigate: ..., input: ... → readable German explanation
+//   - Built-in lint: validates each compiled line against 17+ known actions
+//   - Knowledge Base: comprehensive system prompt teaches the model the full DSL
+//   - Admin-configurable model: defaults to gemini-3.1-flash-lite (fast & cost-efficient)
 package function
 
 import (

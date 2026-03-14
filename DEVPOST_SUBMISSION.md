@@ -103,10 +103,15 @@ Both features share the same Gemini multimodal pipeline, demonstrating that the 
 
 6. **The human touch.** Built by a 70-year-old developer with 50+ years of experience – from IBM mainframes to modern cloud-native architecture. This project proves that passion for building never gets old.
 
+### 🔧 Self-Healing Loop (LIVE)
+
+When PCCaddie **completely redesigned their booking interface** – new CSS selectors, dropdowns replaced by button bars, removed UI elements – the agent's existing skill failed immediately. Instead of requiring a re-recording, the agent **autonomously diagnosed each failure** using Gemini Vision, proposed fixes, and an admin accepted them in-app. Over **5 self-healing cycles**, the agent recovered from **11% (Step 7/63) to 100%** – completing a full booking on the redesigned website.
+
+> **📄 [Full Self-Healing Demo – 5 Cycles, 5 Problems, 100% Recovery](SELF_HEALING_DEMO.md)**
+
 ### What's next
 
 - **Multi-portal support:** KB Segment Recording enables any golf booking portal to be onboarded in under 30 minutes – already in progress for additional systems
-- **Self-healing selectors (LIVE):** When selectors fail, the agent captures a screenshot, analyzes it with Gemini Vision, and proposes fixes. An admin reviews and accepts in-app. **[See the full 5-cycle demo →](SELF_HEALING_DEMO.md)**
 - **Voice control:** "Hey GolfStatus, book me a tee time for Saturday" via Gemini Live API
 - **Intelligent slot selection:** Let Gemini choose the optimal time based on weather forecasts and player availability
 - **Vision-first mode:** As Gemini Vision improves, progressively shift from CSS-primary to Vision-primary execution – the 3-tier architecture is already designed for this transition

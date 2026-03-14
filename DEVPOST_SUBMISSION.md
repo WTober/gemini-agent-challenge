@@ -47,14 +47,25 @@ Admins can **record browser sessions** as reusable knowledge base segments – n
 
 This "record once, reuse forever" approach dramatically reduces the time to support a new booking portal from days to under 30 minutes. Each segment stores Playwright selectors with built-in validation checkpoints. A **KB Feedback Loop** automatically writes execution results (which selectors worked, which needed fallbacks, timing per step) back to Firestore after each real run – building the foundation for self-improving skills.
 
-### 🌐 Broader Multimodal Ecosystem
+### 🌐 The Bigger Picture: From Technology Proof to Production App
 
-The same Gemini Vision infrastructure powers two additional features in GolfStatus:
+GolfStatus started as a **technology proof-of-concept** to explore what's possible with Google Cloud AI. It has since evolved into a **production-ready app** available on Android and iOS – uniting **8 distinct AI capabilities** in a single platform. The Browser Agent is just one piece of a much larger AI ecosystem:
 
-- **🦔 Rules Hedgehog** – Snap a photo of your ball on the course → Gemini Vision analyzes the exact position and delivers instant, official rule guidance. Vision in, ruling out.
-- **🎨 AI Presentation Generator (Gamma)** – After each agent run, results are auto-compiled into a rich visual presentation: screenshots, step log, booking confirmation – all in one shareable document. The agent doesn't just act, it reports.
+| AI Capability | Google Cloud Service | What It Does |
+|---|---|---|
+| 🌐 **Browser Agent** | Cloud Run + Gemini Vision | Autonomous booking on external portals (this submission) |
+| 🔧 **Self-Healing Loop** | Gemini Vision + Firestore | Agent detects failures, proposes fixes from screenshots |
+| 📊 **Course Status** | Cloud Functions + Gemini | Scrapes club websites and determines real-time course status (open/closed/restricted) |
+| 📅 **Weekly Briefing** | Gemini + Google Search | AI-generated weekly analysis: weather, tournaments, course conditions, availability |
+| 🦊 **Deal Finder** | Gemini + Google Search | Discovers hidden green fee deals and discounts across the web |
+| ✈️ **Travel Planner** | Gemini + Maps + Search | Complete golf trip planning with hotels, routes, and course recommendations |
+| 🦔 **Rules Hedgehog** | Gemini Vision (multimodal) | Snap a photo of your ball → instant, official rule guidance based on the image |
+| 💬 **Chat Moderation** | Gemini | AI-powered community chat with automatic moderation, smart replies, and photo analysis |
+| 🎙️ **Agent TTS** | Cloud Text-to-Speech | Every agent result can be read aloud – Neural2 voices in German and English |
+| 🤖 **Support Agent** | Gemini + Knowledge Base | In-app support with a curated knowledge base for instant answers |
+| 🎨 **Presentation Generator** | Gemini + External API | Auto-compiles agent results into rich visual presentations |
 
-Both features share the same Gemini multimodal pipeline, demonstrating that the architecture generalises far beyond browser automation.
+> **One app, one codebase, 8+ AI features – all powered by Google Cloud.** What began as a proof that Gemini can navigate web UIs has grown into a comprehensive AI-powered golf companion that demonstrates the breadth of what's possible with the Google Cloud AI stack.
 
 
 ### How we built it

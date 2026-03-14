@@ -106,7 +106,7 @@ Both features share the same Gemini multimodal pipeline, demonstrating that the 
 ### What's next
 
 - **Multi-portal support:** KB Segment Recording enables any golf booking portal to be onboarded in under 30 minutes – already in progress for additional systems
-- **Self-healing selectors:** The KB Feedback Loop already captures which selectors fail per run. Next step: automatic selector correction – when a CSS selector fails repeatedly, the agent proposes a Vision-based or text-based alternative and updates the KB segment
+- **Self-healing selectors (LIVE):** When selectors fail, the agent captures a screenshot, analyzes it with Gemini Vision, and proposes fixes. An admin reviews and accepts in-app. **[See the full 5-cycle demo →](SELF_HEALING_DEMO.md)**
 - **Voice control:** "Hey GolfStatus, book me a tee time for Saturday" via Gemini Live API
 - **Intelligent slot selection:** Let Gemini choose the optimal time based on weather forecasts and player availability
 - **Vision-first mode:** As Gemini Vision improves, progressively shift from CSS-primary to Vision-primary execution – the 3-tier architecture is already designed for this transition

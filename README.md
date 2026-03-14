@@ -167,6 +167,12 @@ A **no-code workflow recorder** that captures browser interactions as reusable s
 
 Every agent run can be executed in **Sandbox mode** – the agent navigates and screenshots everything, but does NOT submit forms or trigger real bookings. Perfect for testing and demos.
 
+### 🔧 Self-Healing Loop (LIVE DEMO)
+
+When the target website **completely redesigned its interface** during live operations – new selectors, dropdowns replaced by buttons, removed UI elements – the agent didn't break permanently. It **autonomously detected each failure**, analyzed screenshots with Gemini Vision, and proposed fixes. Over **5 cycles, the agent recovered from 11% to 100%** – completing a full booking on the redesigned website without re-recording the skill.
+
+> **📄 [Full Self-Healing Demo – 5 Cycles, 5 Problems, 100% Recovery](SELF_HEALING_DEMO.md)**
+
 ## 🚀 Spin-Up Instructions
 
 ### Prerequisites

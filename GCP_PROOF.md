@@ -63,3 +63,13 @@ The recording shows:
 3. **Cloud Run service** (`run-browser-agent`) with Gemini 2.5 Flash
 4. **Vertex AI** integration code (`genai.BackendVertexAI`)
 5. Environment variables confirming GCP configuration
+
+---
+
+## 🔧 Self-Healing Demo: Agent Adapts to Redesigned Website
+
+PCCaddie – one of Germany's largest golf club management platforms – **redesigned their entire booking interface during live operations**. CSS selectors changed, dropdowns became button bars, UI elements were removed. The agent's existing skill immediately failed.
+
+**What happened next is remarkable:** Instead of requiring a complete re-recording, the agent **autonomously diagnosed each failure** using Gemini Vision, captured the broken screenshot, and proposed a concrete fix. An admin reviewed and accepted each suggestion in-app. Over **5 self-healing cycles**, the agent progressed from **11% (Step 7/63) to 100% (Step 63/63)** – completing a full booking on the redesigned website.
+
+> **📄 [Full Self-Healing Demo – 5 Cycles, 5 Problems, 100% Recovery](SELF_HEALING_DEMO.md)**

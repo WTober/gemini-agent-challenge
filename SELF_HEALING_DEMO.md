@@ -50,11 +50,9 @@ sequenceDiagram
 
 ## Screenshots der App
 
-| | |
+| Self-Healing Vorschlag (Zyklus 1) | Angenommene Vorschläge (Zyklus 5) |
 |---|---|
-| ![Agent Execution Log](screenshots/agent_running.jpg) | ![Skill-Editor NL + DSL](screenshots/skill_editor_NL.png) |
-
-![Admin Bereich – Agent-Übersicht mit Filteroptionen](screenshots/skill_editor.jpg)
+| ![Self-Healing Vorschlag](screenshots/agent/self_healing_suggestion.jpg) | ![Angenommene Vorschläge](screenshots/agent/suggestions_accepted.jpg) |
 
 ---
 
@@ -147,6 +145,10 @@ if "datum" in input_values:
 ```
 
 > **Edge Case:** PCCaddie zeigt für den heutigen Tag nicht `14.03.` sondern `Heute` als Button-Label → wurde automatisch erkannt und behandelt.
+
+**Die neue PCCaddie Datum-UI:**
+
+![PCCaddie neue Datum-Buttons: Heute | 15.03. | 16.03. | 17.03.](screenshots/agent/pccaddie_date_buttons.png)
 
 ---
 

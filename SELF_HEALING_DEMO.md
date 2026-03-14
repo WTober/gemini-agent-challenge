@@ -171,11 +171,9 @@ After the 5 self-healing cycles, the agent was able to complete the full booking
 
 | | |
 |---|---|
-| ![Booking Success](screenshots/booking_success.jpg) | ![PCCaddie Confirmation](screenshots/pccaddy_booking_confirmed.jpg) |
+| ![Booking Success – App confirmation](screenshots/agent/booking_success_new.jpg) | ![PCCaddie Confirmation – Reservierung abgeschlossen](screenshots/agent/booking_confirmed_new.jpg) |
 
-![Booking Result – 28/31 steps executed live, duration: 1:58](screenshots/booking_result.jpg)
-
-> ⚠️ *The booking screenshots above are from an earlier successful run. Updated screenshots will be added after the current deployment completes.*
+![GolfStatus App – Testbuchung 1 Person KB erfolgreich, Dauer: 3:20](screenshots/agent/booking_result_new.jpg)
 
 ## Results Overview
 

@@ -120,11 +120,15 @@ When PCCaddie **completely redesigned their booking interface** – new CSS sele
 
 > **📄 [Full Self-Healing Demo – 5 Cycles, 5 Problems, 100% Recovery](SELF_HEALING_DEMO.md)**
 
+### 🎯 Intelligent Slot Selection (LIVE)
+
+The `find_slot` command combines **JavaScript DOM reading** with **Python time logic** to select the best available tee time. JavaScript reads `data-time` and `data-status="bookable"` attributes from the timetable, Python picks the nearest slot ≥ target time, and Playwright clicks it. More reliable than Vision for dense calendar grids, more adaptive than hardcoded selectors.
+
 ### What's next
 
-- **Multi-portal support:** KB Segment Recording enables any golf booking portal to be onboarded in under 30 minutes – already in progress for additional systems
-- **Voice control:** "Hey GolfStatus, book me a tee time for Saturday" via Gemini Live API
-- **Intelligent slot selection:** Let Gemini choose the optimal time based on weather forecasts and player availability
+- **Multi-portal support:** KB Segment Recording enables any golf booking portal to be onboarded in under 30 minutes
+- **Voice control:** "Hey GolfStatus, book me a tee time for Saturday" via Gemini Live Audio API
+- **Cross-club scheduling:** Agent compares availability across multiple clubs and suggests the best option
 - **Vision-first mode:** As Gemini Vision improves, progressively shift from CSS-primary to Vision-primary execution – the 3-tier architecture is already designed for this transition
 
 ---

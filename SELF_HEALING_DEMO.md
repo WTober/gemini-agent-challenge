@@ -50,13 +50,11 @@ sequenceDiagram
 
 ## Screenshots der App
 
-````carousel
-![Agent Execution Log – Live Step-by-Step Protokoll](screenshots/agent_running.jpg)
-<!-- slide -->
-![Skill-Editor – NL-Beschreibung + DSL-Befehle](screenshots/skill_editor_NL.png)
-<!-- slide -->
+| | |
+|---|---|
+| ![Agent Execution Log](screenshots/agent_running.jpg) | ![Skill-Editor NL + DSL](screenshots/skill_editor_NL.png) |
+
 ![Admin Bereich – Agent-Übersicht mit Filteroptionen](screenshots/skill_editor.jpg)
-````
 
 ---
 
@@ -169,13 +167,11 @@ if "datum" in input_values:
 
 Nach den 5 Self-Healing Zyklen konnte der Agent die komplette Buchung durchführen:
 
-````carousel
-![Booking Success – Agent bestätigt Reservierung (Step 30: wait_for "Buchung erfolgreich")](screenshots/booking_success.jpg)
-<!-- slide -->
-![PCCaddie Bestätigung – Reservierung abgeschlossen, 2 Spieler gebucht](screenshots/pccaddy_booking_confirmed.jpg)
-<!-- slide -->
-![Booking Result – Erfolg mit 28 von 31 Schritten echt ausgeführt, Dauer: 1:58](screenshots/booking_result.jpg)
-````
+| | |
+|---|---|
+| ![Booking Success](screenshots/booking_success.jpg) | ![PCCaddie Bestätigung](screenshots/pccaddy_booking_confirmed.jpg) |
+
+![Booking Result – 28/31 Schritten echt ausgeführt, Dauer: 1:58](screenshots/booking_result.jpg)
 
 ## Ergebnis-Übersicht
 

@@ -1,16 +1,3 @@
-// run_agent.go – Agent Orchestration Layer (Gemini Live Agent Challenge)
-//
-// This is the Go Cloud Functions backend that manages the complete agent lifecycle:
-//   1. Receives run requests from the Flutter mobile app (via Firebase callable)
-//   2. Loads the skill definition (DSL) and user input values from Firestore
-//   3. Deducts credits via Firestore transaction (with VIP bypass & dry-run shadow mode)
-//   4. Creates a real-time run document (agent_runs/{runId}) for live dashboard updates
-//   5. Routes execution to either:
-//      - Gemini prompt (text-only skills like weather briefings)
-//      - Browser Agent on Cloud Run (Playwright + Gemini Vision for UI navigation)
-//
-// The browser automation runs are delegated via HTTP to a separate Cloud Run service
-// (browser_agent/main.py) to isolate the heavy Playwright/Chromium workload.
 package function
 
 import (
@@ -35,6 +22,7 @@ func init() {
 	functions.HTTP("SaveUserAgent", SaveUserAgent)
 	functions.HTTP("DeleteUserAgent", DeleteUserAgent)
 	functions.HTTP("GetAgentRunLog", GetAgentRunLog)
+	functions.HTTP("CancelAgentRun", CancelAgentRun)
 }
 
 // AgentRunStep is a single step in the live execution log.
@@ -72,15 +60,8 @@ func setRunStatus(ctx context.Context, fsClient *firestore.Client, runID, status
 	_, _ = fsClient.Collection("agent_runs").Doc(runID).Update(ctx, updates)
 }
 
-// checkAndDeductAgentCredits uses a Firestore transaction to atomically check
-// and deduct credits. This prevents race conditions when multiple agents run
-// simultaneously. Supports:
-//   - VIP bypass: VIP users (isVip=true) skip credit checks entirely
-//   - Shadow mode (CreditSystemDryRun): logs usage but doesn't actually deduct
-//   - Dynamic cost: each skill defines its own creditCost
+// checkAndDeductAgentCredits uses a dynamic credit cost per skill.
 func checkAndDeductAgentCredits(ctx context.Context, uid string, skillID string, creditCost int64) error {
-	config := LoadAppConfig(ctx)
-
 	fsClient, err := firestore.NewClient(ctx, ProjectID)
 	if err != nil {
 		return err
@@ -119,18 +100,10 @@ func checkAndDeductAgentCredits(ctx context.Context, uid string, skillID string,
 			balance = int64(b)
 		}
 
-		isDryRun := config.CreditSystemDryRun
-		log.Printf("checkAndDeductAgentCredits [%s - %s]: Balance=%d, Cost=%d, DryRun=%v", uid, skillID, balance, creditCost, isDryRun)
+		log.Printf("checkAndDeductAgentCredits [%s - %s]: Balance=%d, Cost=%d", uid, skillID, balance, creditCost)
 
 		if balance < creditCost {
-			if isDryRun {
-				return nil // Shadow mode: allow but log
-			}
 			return fmt.Errorf("QUOTA_EXCEEDED")
-		}
-
-		if isDryRun {
-			return nil
 		}
 
 		updates := []firestore.Update{
@@ -307,13 +280,7 @@ func RunUserAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. Execute asynchronously – fire-and-forget for manual runs.
-	// NOTE: Unlike the Scheduler (which uses sync.WaitGroup to prevent Cloud
-	// Functions from killing goroutines), manual runs return immediately to the
-	// user. The goroutine continues running because Cloud Functions 2nd Gen
-	// keeps the instance alive for concurrent requests. The browser agent
-	// writes its own status to Firestore via HTTP, so the run completes
-	// independently of this function's response lifecycle.
+	// 5. Execute asynchronously
 	go executeAgentRun(runID, uid, agentID, goal, skillType, inputValues, skill, requestDryRun, userTZ, userLang)
 
 	// 6. Update lastRunAt
@@ -422,10 +389,9 @@ func executePromptRun(ctx context.Context, fsClient *firestore.Client, runID, go
 	prompt = strings.ReplaceAll(prompt, "{NOW}", formatDateTimeForAI(nowLocal))
 
 	// Prepend date context so the model knows what "today" is.
-	// IMPORTANT: All tested Gemini models (2.5-flash, 3-flash-preview) report
-	// their date as 2024 due to training cutoff. Without explicit date context,
-	// they refuse weather forecasts for 2026 dates claiming "far in the future".
-	// This context injection fixes that problem across all prompt-based skills.
+	// All tested models (gemini-2.5-flash, gemini-3-flash-preview) think it's 2024
+	// due to training cutoff. Without this context, they refuse weather forecasts
+	// for 2026 dates claiming "this date is far in the future".
 	dateContext := fmt.Sprintf(
 		"[SYSTEM CONTEXT: Today is %s. All mentioned dates are relative to today and are NOT in the far future. "+
 			"STRICT RULES: When using search results, ONLY use exact data (numbers, temperatures, percentages) found in the search results. "+
@@ -526,6 +492,19 @@ func executeBrowserAutomationRun(
 		)
 	}
 
+	// Determine Gemini model: per-skill override → AppConfig → default
+	appConfig := LoadAppConfig(ctx)
+	geminiModel := appConfig.BrowserAgentModel
+	geminiLocation := appConfig.BrowserAgentLocation
+	if m, ok := skill["model"].(string); ok && m != "" {
+		geminiModel = m
+	}
+	if l, ok := skill["location"].(string); ok && l != "" {
+		geminiLocation = l
+	}
+
+	log.Printf("executeBrowserAutomationRun [%s]: model=%s, location=%s, reasoning=%s", runID, geminiModel, geminiLocation, appConfig.ReasoningModel)
+
 	payload := map[string]interface{}{
 		"runId":            runID,
 		"agentId":          agentID,
@@ -536,6 +515,10 @@ func executeBrowserAutomationRun(
 		"successCondition": skill["successCondition"],
 		"precondition":     skill["precondition"],
 		"dryRun":           dryRun,
+		"geminiModel":      geminiModel,
+		"geminiLocation":   geminiLocation,
+		"reasoningModel":    appConfig.ReasoningModel,
+		"reasoningLocation": appConfig.ReasoningLocation,
 	}
 
 	body, err := json.Marshal(payload)
@@ -800,4 +783,85 @@ func GetAgentRunLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponse(w, map[string]interface{}{"data": runData})
+}
+
+// CancelAgentRun cancels a running or pending agent run.
+// POST body: { "data": { "runId": "..." } }
+func CancelAgentRun(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	uid, err := VerifyUser(w, r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var wrapper struct {
+		Data struct {
+			RunID string `json:"runId"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&wrapper); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if wrapper.Data.RunID == "" {
+		http.Error(w, "runId required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+	fsClient, err := firestore.NewClient(ctx, ProjectID)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	defer fsClient.Close()
+
+	runRef := fsClient.Collection("agent_runs").Doc(wrapper.Data.RunID)
+	doc, err := runRef.Get(ctx)
+	if err != nil {
+		http.Error(w, "Run not found", http.StatusNotFound)
+		return
+	}
+
+	runData := doc.Data()
+	// Security: run must belong to the requesting user
+	if runData["userId"] != uid {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	status, _ := runData["status"].(string)
+	if status != "pending" && status != "running" {
+		writeResponse(w, map[string]interface{}{"data": map[string]interface{}{"status": "already_completed"}})
+		return
+	}
+
+	now := time.Now()
+	_, err = runRef.Update(ctx, []firestore.Update{
+		{Path: "status", Value: "cancelled"},
+		{Path: "completedAt", Value: now},
+		{Path: "errorMsg", Value: "Vom Benutzer abgebrochen"},
+		{Path: "steps", Value: firestore.ArrayUnion(map[string]interface{}{
+			"timestamp": now,
+			"action":    "Abgebrochen",
+			"detail":    "Vom Benutzer manuell gestoppt",
+			"isError":   true,
+		})},
+	})
+	if err != nil {
+		log.Printf("CancelAgentRun [%s]: Firestore error: %v", wrapper.Data.RunID, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("CancelAgentRun: Run %s cancelled by user %s", wrapper.Data.RunID, uid)
+	writeResponse(w, map[string]interface{}{"data": map[string]interface{}{"status": "cancelled"}})
 }

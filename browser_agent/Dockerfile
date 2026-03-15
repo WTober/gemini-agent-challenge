@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium
 
 COPY main.py .
+COPY knowledge_base.py .
 
 ENV PORT=8080
 CMD ["functions-framework", "--target=RunBrowserAgent", "--port=8080"]

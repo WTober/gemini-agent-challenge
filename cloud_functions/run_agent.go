@@ -293,7 +293,7 @@ func RunUserAgent(w http.ResponseWriter, r *http.Request) {
 }
 
 // executeAgentRun runs the agent asynchronously, routing to the appropriate executor.
-func executeAgentRun(runID, uid, agentID, goal, skillType string, inputValues map[string]string, skill map[string]interface{}, requestDryRun bool, userTZ, userLang string) {
+func executeAgentRun(runID, uid, agentID, goal, skillType string, inputValues map[string]string, skill map[string]interface{}, requestDryRun bool, userTZ, userLang string) { //nolint:revive
 	ctx := context.Background()
 
 	fsClient, err := firestore.NewClient(ctx, ProjectID)
@@ -317,6 +317,12 @@ func executeAgentRun(runID, uid, agentID, goal, skillType string, inputValues ma
 
 	switch skillType {
 	case "browser_automation":
+		// Resolve relative date keywords + derive datum_short for browser automation too
+		loc, locErr := time.LoadLocation(userTZ)
+		if locErr != nil {
+			loc, _ = time.LoadLocation("Europe/Berlin")
+		}
+		inputValues = resolveInputDates(inputValues, loc)
 		// dryRun: either set by admin on the skill OR per-request (user initiated sandbox run)
 		skillDryRun, _ := skill["dryRun"].(bool)
 		executeBrowserAutomationRun(ctx, fsClient, runID, uid, agentID, inputValues, skill, skillDryRun || requestDryRun)
@@ -345,6 +351,17 @@ func resolveInputDates(inputValues map[string]string, loc *time.Location) map[st
 			inputValues[k] = formatDateForAI(resolved)
 		}
 	}
+
+	// Always derive datum_short (dd.mm) from datum — the calendar dropdown
+	// only shows "dd.mm Weekday" format, so we must always trim to 5 chars.
+	// This overrides any user-supplied datum_short to ensure correct format.
+	if datum, ok := inputValues["datum"]; ok && datum != "" {
+		if len(datum) >= 5 {
+			inputValues["datum_short"] = datum[:5]
+			log.Printf("resolveInputDates: datum_short=%q from datum=%q", datum[:5], datum)
+		}
+	}
+
 	return inputValues
 }
 

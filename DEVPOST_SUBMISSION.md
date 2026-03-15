@@ -115,11 +115,18 @@ GolfStatus started as a **technology proof-of-concept** to explore what's possib
 
 6. **The human touch.** Built by a 70-year-old developer with 50+ years of experience – from IBM mainframes to modern cloud-native architecture. This project proves that passion for building never gets old.
 
-### 🔧 Self-Healing Loop (LIVE)
+### 🔧 Self-Healing Loop + Site Knowledge Auto-Learning (LIVE)
 
 When PCCaddie **completely redesigned their booking interface** – new CSS selectors, dropdowns replaced by button bars, removed UI elements – the agent's existing skill failed immediately. Instead of requiring a re-recording, the agent **autonomously diagnosed each failure** using Gemini Vision, proposed fixes, and an admin accepted them in-app. Over **5 self-healing cycles**, the agent recovered from **11% (Step 7/63) to 100%** – completing a full booking on the redesigned website.
 
 > **📄 [Full Self-Healing Demo – 5 Cycles, 5 Problems, 100% Recovery](SELF_HEALING_DEMO.md)**
+
+**Site Knowledge Auto-Learning (NEW):** Every approved fix is automatically analyzed and stored as domain-specific knowledge in Firestore. The system maintains a `site_knowledge` document per website with:
+- **UI Patterns** – e.g., "PCCaddie uses custom combobox dropdowns, not native `<select>` elements"
+- **Common Errors** – e.g., "Text '10' matches '1' first – always use full text like 'Tee 10'"
+- **Learned Patterns** – Auto-accumulated from approved fixes
+
+When the next failure occurs, Gemini receives this domain knowledge in its analysis prompt – making each subsequent fix suggestion more accurate. **The agent gets smarter with every fix it applies.**
 
 ### 🎯 Intelligent Slot Selection (LIVE)
 
@@ -128,6 +135,7 @@ The `find_slot` command combines **JavaScript DOM reading** with **Python time l
 ### What's next
 
 - **Multi-portal support:** KB Segment Recording enables any golf booking portal to be onboarded in under 30 minutes
+- **Site Knowledge Transfer:** When onboarding a new booking portal, the agent starts with an empty knowledge base but rapidly accumulates domain-specific patterns from fixes – reducing onboarding friction from portal to portal
 - **Voice control:** "Hey GolfStatus, book me a tee time for Saturday" via Gemini Live Audio API
 - **Cross-club scheduling:** Agent compares availability across multiple clubs and suggests the best option
 - **Vision-first mode:** As Gemini Vision improves, progressively shift from CSS-primary to Vision-primary execution – the 3-tier architecture is already designed for this transition

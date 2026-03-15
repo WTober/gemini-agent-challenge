@@ -27,7 +27,7 @@ Golf clubs use legacy booking systems like PC Caddy where popular tee times open
 The **GolfStatus Browser Agent** is a fully autonomous UI Navigator that:
 
 - **Observes** the browser through screenshots (no DOM access, no APIs)
-- **Understands** each page using **Gemini 2.5 Flash** multimodal vision
+- **Understands** each page using **Gemini 3.1 Flash Lite** multimodal vision
 - **Acts** by clicking, typing, and scrolling at precise screen coordinates
 - **Completes** complex 74-step workflows across real booking portals
 - **Runs on schedule** – weekly at a specific day and time, fully unattended
@@ -88,7 +88,8 @@ GolfStatus started as a **technology proof-of-concept** to explore what's possib
 
 | Component | Technology | Google Cloud Service |
 |---|---|---|
-| Vision AI | Gemini 2.5 Flash (multimodal) | Vertex AI / GenAI SDK |
+| Vision AI (Execution) | Gemini 3.1 Flash Lite (multimodal) | Vertex AI / GenAI SDK |
+| Reasoning (Self-Healing) | Gemini 3.1 Pro | Vertex AI / GenAI SDK |
 | NL Skill Compiler | Gemini 3.1 Flash Lite | Vertex AI / GenAI SDK |
 | Browser | Playwright (headless Chromium) | **Cloud Run** |
 | Orchestration | Go Cloud Functions (2nd Gen) | **Cloud Functions** |

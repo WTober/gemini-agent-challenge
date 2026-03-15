@@ -60,7 +60,7 @@ https://github.com/WTober/gemini-agent-challenge/blob/main/gcp_proof.mov
 The recording shows:
 1. Active GCP project (`golfstatus-a8d6c`)
 2. **42 deployed Cloud Functions** (2nd Gen, `europe-west3`)
-3. **Cloud Run service** (`run-browser-agent`) with Gemini 2.5 Flash
+3. **Cloud Run service** (`run-browser-agent`) with Gemini 3.1 Flash Lite
 4. **Vertex AI** integration code (`genai.BackendVertexAI`)
 5. Environment variables confirming GCP configuration
 

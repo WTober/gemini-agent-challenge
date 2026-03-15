@@ -50,7 +50,8 @@ Golf clubs use booking systems like **PC Caddy** where reservations open exactly
 
 | Component | Technology | Google Cloud Service |
 |---|---|---|
-| **Vision AI** | Gemini 2.5 Flash (multimodal) | Vertex AI / GenAI SDK |
+| **Vision AI (Execution)** | Gemini 3.1 Flash Lite (multimodal) | Vertex AI / GenAI SDK |
+| **Reasoning (Self-Healing)** | Gemini 3.1 Pro | Vertex AI / GenAI SDK |
 | **NL Skill Compiler** | Gemini 3.1 Flash Lite | Vertex AI / GenAI SDK |
 | **Browser** | Playwright (headless Chromium) | Cloud Run |
 | **Orchestration** | Go Cloud Functions (2nd Gen) | Cloud Functions |
@@ -193,7 +194,7 @@ cd gemini-agent-challenge
 ```bash
 export PROJECT_ID="your-gcp-project-id"
 export REGION="europe-west3"
-export GEMINI_MODEL="gemini-2.5-flash"
+export GEMINI_MODEL="gemini-3.1-flash-lite-preview"
 ```
 
 ### 3. Deploy to Cloud Run

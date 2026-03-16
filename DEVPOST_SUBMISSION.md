@@ -20,7 +20,9 @@
 
 ### Inspiration
 
-Golf clubs use legacy booking systems like PC Caddy where popular tee times open exactly 6 days in advance – often at 9 PM. Miss that window by minutes, and the slots are gone. We built an AI agent that solves this: it watches the clock, navigates the booking portal the moment it opens, and secures your tee time. Automatically. Every week.
+> *"70 years old, still shipping. From IBM mainframes to AI agents – the passion for building never gets old."*
+
+This project was built by a **solo developer with 50+ years of coding experience** – from COBOL on mainframes to Gemini on Google Cloud. The motivation? A real-world problem he faces every week: Golf clubs use legacy booking systems like PC Caddy where popular tee times open exactly 6 days in advance – often at 9 PM. Miss that window by minutes, and the slots are gone. So he built an AI agent that solves this: it watches the clock, navigates the booking portal the moment it opens, and secures the tee time. Automatically. Every week.
 
 ### What it does
 
@@ -113,7 +115,7 @@ GolfStatus started as a **technology proof-of-concept** to explore what's possib
 
 5. **Sandbox mode was essential.** During development, the agent accidentally booked real tee times. Sandbox mode (Gemini still plans every action, but form submissions are skipped) became crucial for safe iteration.
 
-6. **The human touch.** Built by a 70-year-old developer with 50+ years of experience – from IBM mainframes to modern cloud-native architecture. This project proves that passion for building never gets old.
+6. **70 years old, still shipping.** Built by a solo developer who started on IBM mainframes in the 1970s and never stopped. 50+ years of hands-on coding – from Fortran and COBOL through every generation of databases to Flutter, Go, and Gemini. This project proves that the best code comes from engineers who combine decades of architectural intuition with the latest tools.
 
 ### 🔧 Self-Healing Loop + Site Knowledge Auto-Learning (LIVE)
 

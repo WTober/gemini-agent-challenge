@@ -252,16 +252,15 @@ The demo shows:
 
 ## 👨‍💻 About the Developer
 
-Built by **Wolfgang Tober** – a 70-year-old developer with over **50 years of hands-on coding and architecture experience**.
+> *"70 years old, still shipping. From IBM mainframes to AI agents – the passion for building never gets old."*
 
-From **IBM mainframes** to **personal computers** to **mobile apps** – Wolfgang has seen and built it all:
-- 🖥️ Mainframe systems (COBOL, assembler)
-- 🗄️ Databases across generations (DB2, Oracle, MySQL, PostgreSQL, Firestore, and more)
+Built by **Wolfgang Tober** – a solo developer with over **50 years of hands-on coding and architecture experience**, from COBOL on mainframes to Gemini on Google Cloud.
+
+- 🖥️ Mainframe systems (COBOL, assembler) – 1970s
+- 🗄️ Databases across generations (DB2, Oracle, MySQL, PostgreSQL, Firestore)
 - 💻 Languages from Fortran to Go, Dart, Python, and Swift
 - 📱 Modern mobile development with Flutter (Android + iOS)
-- ☁️ Cloud-native architectures on Google Cloud
-
-> *"Age is just a number. The passion for building things never gets old."*
+- ☁️ Cloud-native AI architectures on Google Cloud
 
 ## 📱 The Bigger Picture: From Technology Proof to Production App
 
